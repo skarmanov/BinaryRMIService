@@ -1,0 +1,4 @@
+rootProject.name = 'brmi'
+include 'brmi-api'
+include 'brmi-server'
+include 'brmi-client'

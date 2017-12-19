@@ -1,8 +1,27 @@
+#Ignore local files
+**/local/
+*-local-*
+*-local.properties
+*.eap 
+*.ldb 
+
 # Compiled class file
 *.class
 
+#Ignore Gradle files
+.gradle/
+build/
+
+#Ignore IDE files
+.idea/
+.settings/
+.classpath
+.project
+bin/
+
 # Log file
 *.log
+*.log.*
 
 # BlueJ files
 *.ctxt
@@ -11,7 +30,7 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
+#*.jar
 *.war
 *.ear
 *.zip

@@ -1,0 +1,143 @@
+buildscript {
+    apply from: file('gradle/buildscript.gradle'), to: buildscript
+
+}
+
+apply from: 'gradle/dependencies.gradle'
+
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+
+    group = project_group
+    version = project_version
+
+    eclipse {
+
+        classpath {
+            //customizing the classes output directory:
+            defaultOutputDir = file('build/classes')
+
+            //default settings for downloading sources and Javadoc:
+            downloadSources = true
+            downloadJavadoc = true
+        }
+    }
+}
+
+subprojects {
+    plugins.withType(JavaPlugin) {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+        compileJava {
+            options.encoding = 'UTF-8'
+            // Add unchecked once we drop support for Java 7 as @SuppressWarnings('unchecked') is too buggy in Java 7
+            options.compilerArgs << '-Xlint:deprecation'
+        }
+
+        task srcJar(type: Jar) {
+            classifier = 'src'
+            from sourceSets.main.allSource
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier 'javadoc'
+            from javadoc.destinationDir
+        }
+
+        task docsJar(dependsOn: javadocJar)
+
+        javadoc {
+            options.charSet = 'UTF-8'
+            options.docEncoding = 'UTF-8'
+            options.encoding = 'UTF-8'
+        }
+
+        artifacts {
+            archives srcJar
+            archives javadocJar
+        }
+    }
+}
+
+
+project(':brmi-api') {
+    apply plugin: 'java'
+
+    project.version = project_version_api
+
+    dependencies {
+        compile libs.slf4jApi
+
+        testCompile libs.junit
+        testRuntime libs.slf4jlog4j
+    }
+
+    jar.manifest {
+        attributes(
+                'Version': "${version}"
+                )
+    }
+}
+
+project(':brmi-client') {
+    apply plugin: 'java'
+
+    project.version = project_version
+
+    dependencies {
+        compile project(':brmi-api')
+        compile libs.slf4jApi
+        runtime libs.slf4jlog4j
+
+        testCompile libs.junit
+        testRuntime libs.slf4jlog4j
+	testRuntime libs.hamcrest
+    }
+
+    jar.manifest {
+        attributes(
+                'Version': "${version}"
+                )
+    }
+}
+
+project(':brmi-server') {
+    apply plugin: 'java'
+
+    project.version = project_version
+
+    dependencies {
+        compile project(':brmi-api')
+        compile libs.slf4jApi
+
+        runtime libs.slf4jlog4j
+
+        testCompile libs.junit
+        testRuntime libs.slf4jlog4j
+	testRuntime libs.hamcrest
+    }
+
+    task copyDependendLibs(type: Copy) {
+        from(configurations.runtime) {
+//                include('slf4j-log4j12*')  dependent-libs
+        }
+        into "$buildDir/dependent-libs"
+        duplicatesStrategy 'exclude'
+    }
+
+    jar{
+	dependsOn copyDependendLibs
+        manifest {
+          attributes(
+                'Version': "${version}",
+                'Main-Class': "ru.ksa.brmi.server.MyRmiServerApplication"
+                )
+        }
+    }
+}
